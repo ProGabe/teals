@@ -1,24 +1,22 @@
 """
 Card game of WAR
-
 Uses several global variables to track card values but decks and players built
 up during game execution.
-
 There are 7 functions in total that allow the game play to be condensed into
 a smaller logical unit towards the end of the file.
-
 The actual game play is between lines 218 and 302 (and that's the short version).
-
 Imagine how long that one loop would be if you tried to include ALL of the functionality
 into a single giant loop and how confusing it would be if something went wrong!
 """
-import random
 
+# Made a small improvment to this so that the cards would be displayed as the color they are; red for diamond and hearts, black for spades and clovers
+
+import random
 
 # Face value of cards
 card_values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
-# Clubs, Spades, Diamonds, Hearts
-card_suit = ['\u2663', '\u2660', '\u2666', '\u2665']
+# Clubs, Diamonds, Spades, Hearts
+card_suit = ['\u2663', '\u2666', '\u2660', '\u2665']
 
 # Indexes to player list
 PLAYER_1 = 0
@@ -37,11 +35,9 @@ def build_deck(shuffle_count=7):
     """
         Build a deck of 52 cards and shuffle them
         for a game.
-
         Parameters:
         shuffle_count:
             int - Number of times to shuffle
-
         Returns:
             List of cards where a card is a list of
                 [weight, face, suit]
@@ -50,7 +46,7 @@ def build_deck(shuffle_count=7):
     deck = []
     for suit in range(len(card_suit)):
         for value in range(len(card_values)):
-            card = [value, card_values[value], card_suit[suit]]
+            card = [value, card_values[value], card_suit[suit], '\033[39m']
             deck.append(card)
 
     # Now loop through the number of shuffles to mix them up
@@ -65,10 +61,8 @@ def deal_cards(deck):
     """
         Provide a full deck (52 cards), and divvy them
         up into two player decks.
-
         Parameters:
             deck - List of cards
-
         Returns:
             A list of lists (one for each player)
     """
@@ -87,11 +81,9 @@ def game_over(player_decks):
     """
         Determines if either of the player decks are empty
         and if so, game is over.
-
         Parameters:
             player_decks -
                 Decks for each player
-
         Returns:
             True if either deck is empty, False otherwise
     """
@@ -109,11 +101,9 @@ def game_over(player_decks):
 def compare_cards(risk_cards):
     """
         Return index of winning card or -1 if tied
-
         Parameters:
         risk_cards -
             Cards that are in play
-
         Returns:
             Index of winning card, -1 in case of tie (war)
     """
@@ -131,7 +121,6 @@ def prepend_cards(deck, cards):
     """
         Add cards to a deck. Insert at 0 so it's at the
         bottom of the deck.
-
         Parameters:
         deck -
             Player list of cards
@@ -144,8 +133,8 @@ def prepend_cards(deck, cards):
 
 def format_risk_cards(risk_cards):
     return "(P1) {}{} vs. (P2) {}{}".format(
-        risk_cards[PLAYER_1][CARD_FACE], risk_cards[PLAYER_1][CARD_SUIT],
-        risk_cards[PLAYER_2][CARD_FACE], risk_cards[PLAYER_2][CARD_SUIT]
+        ('\033[31m' if card_suit.index(risk_cards[PLAYER_1][CARD_SUIT]) % 2 else '\033[30m') + risk_cards[PLAYER_1][CARD_FACE], risk_cards[PLAYER_1][CARD_SUIT] + '\033[39m',
+        ('\033[31m' if card_suit.index(risk_cards[PLAYER_2][CARD_SUIT]) % 2 else '\033[30m') + risk_cards[PLAYER_2][CARD_FACE], risk_cards[PLAYER_2][CARD_SUIT] + '\033[39m'
     )
 
 
@@ -154,16 +143,13 @@ def do_war(player_decks, turn_cards=3):
     Do war happens when both players turn equally weighted cards
     and have to "war". War consists of turn_cards cards being played
     face down, then flipping again.
-
     This continues until someone wins or someone runs out of cards and
     has to forfeit.
-
     Parameters:
     player_decks -
         Player card decks
     turn_cards -
         Number of cards to play face down before continuing.
-
     Returns:
         Index of winner
     """
@@ -208,7 +194,7 @@ def do_war(player_decks, turn_cards=3):
         # continue to move cards to winners pile.
         player_id = "Player1" if return_value == 0 else "Player2"
 
-        print("Player {} won the war with {}{}!".format(player_id, current_risk_cards[return_value][CARD_FACE], current_risk_cards[return_value][CARD_SUIT]))
+        print("{} won the war with {}{}".format(player_id, ('\033[31m' if card_suit.index(risk_cards[PLAYER_1][CARD_SUIT]) % 2 else '\033[30m') + current_risk_cards[return_value][CARD_FACE], current_risk_cards[return_value][CARD_SUIT]) + '\033[39m')
         prepend_cards(player_decks[return_value], all_risk_cards)
 
     # Return the index of whomever won the war so they can take original risk cards
@@ -263,8 +249,8 @@ while not game_over(player_decks):
         print("{} : {} - {}{} wins round".format(
             game_turn,
             played_cards,
-            risk_cards[status][CARD_FACE],
-            risk_cards[status][CARD_SUIT]
+            ('\033[31m' if card_suit.index(risk_cards[status][CARD_SUIT]) % 2 else '\033[30m') + risk_cards[status][CARD_FACE],
+            risk_cards[status][CARD_SUIT] + '\033[39m'
         ))
 
         # Give winner the cards
@@ -280,23 +266,8 @@ while not game_over(player_decks):
 
     if game_turn % 10 == 0:
         # Every 10th turn, show how many cards each player has
-        print("P1 card count : {} , P2 card count {}".format(
-            len(player_decks[PLAYER_1]),
-            len(player_decks[PLAYER_2])
-        ))
+        print("P1 card count: {} , P2 card count: {}".format(len(player_decks[PLAYER_1]), len(player_decks[PLAYER_2])))
 
 
 # Game has ended or aborted on MAX_TURN_COUNT so show general stats
-print("""
-STATS:
-P1 card count : {}
-P2 card count {}
-Turn Count: {}
-War Count: {}
-Win Stats [P1, P2]: {}
-""".format(
-    len(player_decks[PLAYER_1]),
-    len(player_decks[PLAYER_2]),
-    game_turn,
-    war_count,
-    win_stats))
+print(f"STATS:\nP1 card count : {len(player_decks[PLAYER_1])}\nP2 card count {len(player_decks[PLAYER_2])}\nTurn Count: {game_turn}\nWar Count: {war_count}\nWin Stats [P1, P2]: {war_count}\nWINNER: {'P1' if len(player_decks[PLAYER_1]) > len(player_decks[PLAYER_2]) else 'P2' if len(player_decks[PLAYER_2]) > len(player_decks[PLAYER_1]) else 'No one.'}")
